@@ -1,8 +1,10 @@
-module.exports = Object.create( Object.assign( {}, require('./__proto__'), {
+module.exports = Object.assign( {}, require('../../../client/js/views/__proto__'), {
+
+    name: 'ToastMessage',
 
     Icons: {
-        error: require('./templates/lib/error')(),
-        success: require('./templates/lib/checkmark')()
+        error: require('../templates/lib/error')(),
+        success: require('../templates/lib/checkmark')()
     },
 
     postRender() {
@@ -13,6 +15,29 @@ module.exports = Object.create( Object.assign( {}, require('./__proto__'), {
         return this
     },
 
+    requiresLogin: false,
+
+    showMessage( type, message ) {
+        return new Promise( ( resolve, reject )  => {
+            if( /show/.test( this.status ) ) this.teardown()
+
+            this.resolution = resolve
+
+            if( type !== 'error' ) this.els.container.classList.add('success')
+
+            this.els.message.textContent = message
+            this.els.title.textContent = type === 'error' ? 'Error' : 'Success'
+            this.slurpTemplate( { insertion: { el: this.els.icon }, template: type === 'error' ? this.Icons.error : this.Icons.success } )
+            
+            this.status = 'showing'
+
+            this.show( true )
+            .then( () => this.hide( true ) )
+            .then( () => this.teardown() )
+            .catch( reject )
+        } )
+    },
+
     teardown() {
         if( this.els.container.classList.contains('success') ) this.els.container.classList.remove('success')
         this.els.message.textContent = ''
@@ -21,10 +46,6 @@ module.exports = Object.create( Object.assign( {}, require('./__proto__'), {
         this.resolution()
     },
 
-    templateOptions() { 
-        console.log( 'templateOptions' )
-        console.log( this.type )
-        console.log( this.message )
-        return { type: this.type, message: this.message, icons: this.Icons } }
+    template: require('../templates/ToastMessage')
 
-} ) )
+} )
